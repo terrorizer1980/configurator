@@ -17,6 +17,7 @@ import signal
 import string
 import sys
 import time
+from numpy.lib._datasource import DataSource
 
 # Import Senzing libraries.
 
@@ -652,25 +653,27 @@ class G2Client:
         self.g2_config = g2_config
         self.g2_configuration_manager = g2_configuration_manager
         self.g2_engine = g2_engine
-        self.datasources = self.get_datasources_list()
+        self.datasources = self.get_datasources()
         self.entity_types = self.datasources.copy()
 
-    def add_data_source(self, data_source):
+    def add_datasources(self, datasources):
         ''' Add a data source to G2 configuration. '''
 
         config_handle = self.get_config_handle()
 
         # Add data sources to configuration.
 
-        self.g2_config.addDataSource(config_handle, data_source)
-        logging.info(message_info(101, data_source))
-        configuration_comment = message(101, data_source)
+        for datasource in datasources:
+            self.g2_config.addDataSource(config_handle, datasource)
+            logging.info(message_info(101, datasource))
+
+        configuration_comment = message(104, datasources)
 
         # Push configuration to database.
 
         self.persist_configuration(config_handle, configuration_comment)
 
-    def add_entity_type(self, entity_type):
+    def add_entitytype(self, entity_type):
         ''' Add an entity type to G2 configuration. '''
 
         config_handle = self.get_config_handle()
@@ -699,12 +702,12 @@ class G2Client:
         #        of the same "name", the two lists are currently synonymous.
 
         if data_source not in self.datasources:
-            self.add_data_source(data_source)
+            self.add_datasource(data_source)
             self.datasources.append(data_source)
             self.entity_types.append(data_source)  # Hack.
 
         if entity_type not in self.entity_types:
-            self.add_entity_type(entity_type)
+            self.add_entitytype(entity_type)
             self.entity_types.append(entity_type)
             self.datasources.append(entity_type)  # Hack.
 
@@ -743,7 +746,7 @@ class G2Client:
 
         return config_handle
 
-    def get_datasources_list(self):
+    def get_datasources(self):
         ''' Determine datasources already defined. '''
 
         config_handle = self.get_config_handle()
@@ -1029,6 +1032,31 @@ def get_g2_engine(config, g2_engine_name="configurator-G2-engine"):
     g2_engine_singleton = result
     return result
 
+
+def get_g2_client(config):
+    ''' Get the G2Client resource. '''
+
+    # Create G2 configuration objects.
+
+    g2_config = get_g2_config(config)
+    g2_configuration_manager = get_g2_configuration_manager(config)
+
+    # Initialize G2 database.
+
+    g2_initializer = G2Initializer(g2_configuration_manager, g2_config)
+    try:
+        g2_initializer.initialize()
+    except Exception as err:
+        logging.error(message_error(701, err, type(err.__cause__), err.__cause__))
+
+    # Create G2 engine object.
+
+    g2_engine = get_g2_engine(config)
+
+    # Create g2_client object.
+
+    return  G2Client(config, g2_engine, g2_configuration_manager, g2_config)
+
 # -----------------------------------------------------------------------------
 # Worker functions
 # -----------------------------------------------------------------------------
@@ -1044,94 +1072,22 @@ def common_prolog(config):
     validate_configuration(config)
     logging.info(entry_template(config))
 
-
-def handle_get_datasources(iterator):
-    ''' Get list of datasources from G2. '''
-
-    # Create G2 configuration objects.
-
-    config = get_config()
-    g2_config = get_g2_config(config)
-    g2_configuration_manager = get_g2_configuration_manager(config)
-
-    # Initialize G2 database.
-
-    g2_initializer = G2Initializer(g2_configuration_manager, g2_config)
-    try:
-        g2_initializer.initialize()
-    except Exception as err:
-        logging.error(message_error(701, err, type(err.__cause__), err.__cause__))
-
-    # Create G2 engine object.
-
-    g2_engine = get_g2_engine(config)
-
-    # Create g2_client object.
-
-    g2_client = G2Client(config, g2_engine, g2_configuration_manager, g2_config)
-
-    # Get results from Senzing G2.
-
-    return g2_client.get_datasources_list()
-
-
-def handle_post_configurator(iterator):
-    ''' Add records to Senzing G2.  Pull resolved entities from G2. '''
-
-    # Create G2 configuration objects.
-
-    config = get_config()
-    g2_config = get_g2_config(config)
-    g2_configuration_manager = get_g2_configuration_manager(config)
-
-    # Initialize G2 database.
-
-    g2_initializer = G2Initializer(g2_configuration_manager, g2_config)
-    try:
-        g2_initializer.initialize()
-    except Exception as err:
-        logging.error(message_error(701, err, type(err.__cause__), err.__cause__))
-
-    # Create G2 engine object.
-
-    g2_engine = get_g2_engine(config)
-
-    # Create g2_client object.
-
-    g2_client = G2Client(config, g2_engine, g2_configuration_manager, g2_config)
-
-    # Purge G2 database.
-
-    g2_client.purge_repository()
-
-    # Populate Senzing G2.
-
-    line_count = 0
-    for jsonline in iterator:
-        line_count += 1
-        g2_client.send_jsonline_to_g2_engine(jsonline)
-
-    # Get results from Senzing G2.
-
-    result = g2_client.get_resolved_entities()
-
-    # Purge G2 database.
-
-    g2_client.purge_repository()
-
-    return result
-
 # -----------------------------------------------------------------------------
 # Flask @app.routes
 # -----------------------------------------------------------------------------
 
+
 @app.route("/datasources", methods=['GET'])
 def http_get_datasources():
 
-    # Interact with Senzing.
+    # Create g2_client object.
 
-    payload = flask_request.get_data(as_text=True)
-    response = handle_get_datasources(payload.splitlines())
+    config = get_config()
+    g2_client = get_g2_client(config)
+
+    # Get results from Senzing G2.
+
+    response = g2_client.get_datasources()
 
     # Craft the HTTP response.
 
@@ -1139,14 +1095,31 @@ def http_get_datasources():
     response_status = status.HTTP_200_OK
     mimetype = 'application/json'
     return Response(response=response_pretty, status=response_status, mimetype=mimetype)
+
 
 @app.route("/datasources", methods=['POST'])
 def http_post_datasources():
 
-    # Interact with Senzing.
+    # Get the HTTP POST body as dictionary.
 
     payload = flask_request.get_data(as_text=True)
-    response = handle_post_datasources(payload.splitlines())
+    payload_dictionary = json.loads(payload)
+
+    # Create g2_client object.
+
+    config = get_config()
+    g2_client = get_g2_client(config)
+
+    # Determine what new datasources need to be created.
+
+    existing_datasources = g2_client.get_datasources()
+    new_datasources = [item for item in payload_dictionary if item not in existing_datasources]
+
+    # Create the new datasources.
+
+    g2_client.add_datasources(new_datasources)
+
+    response = new_datasources
 
     # Craft the HTTP response.
 
@@ -1154,7 +1127,6 @@ def http_post_datasources():
     response_status = status.HTTP_200_OK
     mimetype = 'application/json'
     return Response(response=response_pretty, status=response_status, mimetype=mimetype)
-
 
 # -----------------------------------------------------------------------------
 # do_* functions
