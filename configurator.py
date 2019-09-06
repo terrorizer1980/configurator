@@ -293,7 +293,8 @@ message_dictionary = {
     "100": "senzing-" + SENZING_PRODUCT_ID + "{0:04d}I",
     "101": "Adding datasource '{0}'",
     "102": "Adding entity type '{0}'",
-    "104": "Adding datasources: {0}",
+    "104": "CONFIG_DATA_ID: {0} plus datasources: {1}",
+    "105": "CONFIG_DATA_ID: {0} passed validity tests.",
     "292": "Configuration change detected.  Old: {0} New: {1}",
     "293": "For information on warnings and errors, see https://github.com/Senzing/configurator#errors",
     "294": "Version: {0}  Updated: {1}",
@@ -303,6 +304,8 @@ message_dictionary = {
     "298": "Exit {0}",
     "299": "{0}",
     "300": "senzing-" + SENZING_PRODUCT_ID + "{0:04d}W",
+    "301": "SYS_CFG.CONFIG_DATA_ID: {0} did not pass initialization validation.",
+    "302": "SYS_CFG.CONFIG_DATA_ID: {0} did not pass search validation.",
     "499": "{0}",
     "500": "senzing-" + SENZING_PRODUCT_ID + "{0:04d}E",
     "695": "Unknown database scheme '{0}' in database url '{1}'",
@@ -667,7 +670,8 @@ class G2Client:
             self.g2_config.addDataSource(config_handle, datasource)
             logging.info(message_info(101, datasource))
 
-        configuration_comment = message(104, datasources)
+        config_id = self.get_default_config_id()
+        configuration_comment = message(104, config_id, datasources)
 
         # Push configuration to database.
 
@@ -758,6 +762,30 @@ class G2Client:
         datasources_dictionary = json.loads(datasources_bytearray.decode())
         return datasources_dictionary.get('DSRC_CODE', [])
 
+    def get_default_config_id(self):
+        ''' Get the current configuration id.  SYS_CFG.CONFIG_DATA_ID'''
+        configuration_id_bytearray = bytearray()
+        self.g2_configuration_manager.getDefaultConfigID(configuration_id_bytearray)
+        return configuration_id_bytearray.decode()
+
+    def get_g2_configuration_dictionary(self):
+        ''' Construct a dictionary in the form of the old ini files. '''
+
+        result = {
+            "PIPELINE": {
+                "SUPPORTPATH": self.config.get("support_path"),
+                "CONFIGPATH": self.config.get("config_path")
+            },
+            "SQL": {
+                "CONNECTION": self.config.get("g2_database_url_specific"),
+            }
+        }
+        return result
+
+    def get_g2_configuration_json(self):
+        ''' Return a JSON string with Senzing configuration. '''
+        return json.dumps(self.get_g2_configuration_dictionary())
+
     def get_resolved_entities(self):
         ''' Run G2Engine.exportJSONEngineReport(). '''
 
@@ -791,6 +819,13 @@ class G2Client:
 
         configuration_id_bytearray = bytearray()
         self.g2_configuration_manager.addConfig(configuration_json, configuration_comment, configuration_id_bytearray)
+
+        # Test configuration.
+
+        is_good_configuration = self.test_configuration(configuration_id_bytearray)
+        if not is_good_configuration:
+            logging.warning(message_warning(301, configuration_id_bytearray.decode()))
+            return
 
         # Set Default configuration.
 
@@ -834,6 +869,43 @@ class G2Client:
             exit_error(886, return_code, method, parameters)
 
         logging.debug(message_debug(904, "", jsonline))
+
+    def test_configuration(self, configuration_id):
+        result = True
+
+        # Test engine initialization.
+
+        g2_engine_name = "Test g2_engine"
+        g2_configuration_json = self.get_g2_configuration_json()
+        g2_engine = G2Engine()
+
+        try:
+            g2_engine.initWithConfigIDV2(g2_engine_name, g2_configuration_json, configuration_id, self.config.get('debug', False))
+        except G2Exception.G2Exception as err:
+            result = False
+            logging.warning(message_warning(301, configuration_id_bytearray.decode(), err))
+
+        # Test engine search.
+
+        data = {}
+        data_as_json = json.dumps(data)
+        flags = G2Engine.G2_EXPORT_DEFAULT_FLAGS
+        response_bytearray = bytearray()
+
+        try:
+            g2_engine.searchByAttributesV2(data_as_json, flags, response_bytearray)
+        except G2Exception.G2Exception as err:
+            result = False
+            logging.warning(message_warning(302, configuration_id_bytearray.decode(), err))
+
+        # Log a successful result.
+
+        if result:
+            logging.info(message_info(105, configuration_id.decode()))
+
+        # Epilog.
+
+        return result
 
 # -----------------------------------------------------------------------------
 # Class: G2Client
@@ -1114,17 +1186,21 @@ def http_post_datasources():
 
     existing_datasources = g2_client.get_datasources()
     new_datasources = [item for item in payload_dictionary if item not in existing_datasources]
+    not_needed_datasources = [item for item in payload_dictionary if item in existing_datasources]
 
     # Create the new datasources.
 
     g2_client.add_datasources(new_datasources)
 
-    response = new_datasources
-
     # Craft the HTTP response.
 
+    response = {
+        "existingDatasources": not_needed_datasources,
+        "createdDatasources": new_datasources
+    }
+
     response_pretty = json.dumps(response, sort_keys=True)
-    response_status = status.HTTP_200_OK
+    response_status = status.HTTP_201_CREATED
     mimetype = 'application/json'
     return Response(response=response_pretty, status=response_status, mimetype=mimetype)
 
