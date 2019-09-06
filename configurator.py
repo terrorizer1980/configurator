@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 # -----------------------------------------------------------------------------
-# resolver.py
+# configurator.py
 # -----------------------------------------------------------------------------
 
 from glob import glob
@@ -36,10 +36,10 @@ app = Flask(__name__)
 
 __all__ = []
 __version__ = "1.0.0"  # See https://www.python.org/dev/peps/pep-0396/
-__date__ = '2019-07-16'
-__updated__ = '2019-09-04'
+__date__ = '2019-09-06'
+__updated__ = '2019-09-06'
 
-SENZING_PRODUCT_ID = "5006"  # See https://github.com/Senzing/knowledge-base/blob/master/lists/senzing-product-ids.md
+SENZING_PRODUCT_ID = "5009"  # See https://github.com/Senzing/knowledge-base/blob/master/lists/senzing-product-ids.md
 log_format = '%(asctime)s %(message)s'
 
 # Working with bytes.
@@ -100,7 +100,7 @@ configuration_locator = {
         "cli": "input-file"
     },
     "output_file": {
-        "default": "resolver-output.json",
+        "default": "configurator-output.json",
         "env": "SENZING_OUTPUT_FILE",
         "cli": "output-file"
     },
@@ -183,7 +183,7 @@ def get_parser():
                 "--output-file": {
                     "dest": "output_file",
                     "metavar": "SENZING_OUTPUT_FILE",
-                    "help": "File of JSON lines to be read. Default: resolver-output.json"
+                    "help": "File of JSON lines to be read. Default: configurator-output.json"
                 },
                 "--senzing-dir": {
                     "dest": "senzing_dir",
@@ -253,14 +253,14 @@ def get_parser():
             },
         },
         'version': {
-            "help": 'Print version of resolver.py.',
+            "help": 'Print version of configurator.py.',
         },
         'docker-acceptance-test': {
             "help": 'For Docker acceptance testing.',
         },
     }
 
-    parser = argparse.ArgumentParser(prog="resolver.py", description="Resolve entities. For more information, see https://github.com/Senzing/resolver")
+    parser = argparse.ArgumentParser(prog="configurator.py", description="Perform Senzing configuration. For more information, see https://github.com/Senzing/configurator")
     subparsers = parser.add_subparsers(dest='subcommand', help='Subcommands (SENZING_SUBCOMMAND):')
 
     for subcommand_key, subcommand_values in subcommands.items():
@@ -292,10 +292,9 @@ message_dictionary = {
     "100": "senzing-" + SENZING_PRODUCT_ID + "{0:04d}I",
     "101": "Adding datasource '{0}'",
     "102": "Adding entity type '{0}'",
-    "103": "Processed {0} input records which resolved to {1} entities.",
     "104": "Adding datasources: {0}",
     "292": "Configuration change detected.  Old: {0} New: {1}",
-    "293": "For information on warnings and errors, see https://github.com/Senzing/resolver#errors",
+    "293": "For information on warnings and errors, see https://github.com/Senzing/configurator#errors",
     "294": "Version: {0}  Updated: {1}",
     "295": "Sleeping infinitely.",
     "296": "Sleeping {0} seconds.",
@@ -653,8 +652,8 @@ class G2Client:
         self.g2_config = g2_config
         self.g2_configuration_manager = g2_configuration_manager
         self.g2_engine = g2_engine
-        self.data_sources = self.get_data_sources_list()
-        self.entity_types = self.data_sources.copy()
+        self.datasources = self.get_datasources_list()
+        self.entity_types = self.datasources.copy()
 
     def add_data_source(self, data_source):
         ''' Add a data source to G2 configuration. '''
@@ -699,15 +698,15 @@ class G2Client:
         # Hack.  Since G2Config.addDataSource() creates a datasource and an entity_type
         #        of the same "name", the two lists are currently synonymous.
 
-        if data_source not in self.data_sources:
+        if data_source not in self.datasources:
             self.add_data_source(data_source)
-            self.data_sources.append(data_source)
+            self.datasources.append(data_source)
             self.entity_types.append(data_source)  # Hack.
 
         if entity_type not in self.entity_types:
             self.add_entity_type(entity_type)
             self.entity_types.append(entity_type)
-            self.data_sources.append(entity_type)  # Hack.
+            self.datasources.append(entity_type)  # Hack.
 
         # Run G2Engine.addRecord().
 
@@ -744,8 +743,8 @@ class G2Client:
 
         return config_handle
 
-    def get_data_sources_list(self):
-        ''' Determine data_sources already defined. '''
+    def get_datasources_list(self):
+        ''' Determine datasources already defined. '''
 
         config_handle = self.get_config_handle()
 
@@ -977,7 +976,7 @@ def get_g2_configuration_json(config):
     return json.dumps(get_g2_configuration_dictionary(config))
 
 
-def get_g2_config(config, g2_config_name="resolver-G2-config"):
+def get_g2_config(config, g2_config_name="configurator-G2-config"):
     ''' Get the G2Config resource. '''
     global g2_config_singleton
 
@@ -995,7 +994,7 @@ def get_g2_config(config, g2_config_name="resolver-G2-config"):
     return result
 
 
-def get_g2_configuration_manager(config, g2_configuration_manager_name="resolver-G2-configuration-manager"):
+def get_g2_configuration_manager(config, g2_configuration_manager_name="configurator-G2-configuration-manager"):
     ''' Get the G2ConfigMgr resource. '''
     global g2_configuration_manager_singleton
 
@@ -1013,7 +1012,7 @@ def get_g2_configuration_manager(config, g2_configuration_manager_name="resolver
     return result
 
 
-def get_g2_engine(config, g2_engine_name="resolver-G2-engine"):
+def get_g2_engine(config, g2_engine_name="configurator-G2-engine"):
     ''' Get the G2Engine resource. '''
     global g2_engine_singleton
 
@@ -1046,7 +1045,37 @@ def common_prolog(config):
     logging.info(entry_template(config))
 
 
-def handle_post_resolver(iterator):
+def handle_get_datasources(iterator):
+    ''' Get list of datasources from G2. '''
+
+    # Create G2 configuration objects.
+
+    config = get_config()
+    g2_config = get_g2_config(config)
+    g2_configuration_manager = get_g2_configuration_manager(config)
+
+    # Initialize G2 database.
+
+    g2_initializer = G2Initializer(g2_configuration_manager, g2_config)
+    try:
+        g2_initializer.initialize()
+    except Exception as err:
+        logging.error(message_error(701, err, type(err.__cause__), err.__cause__))
+
+    # Create G2 engine object.
+
+    g2_engine = get_g2_engine(config)
+
+    # Create g2_client object.
+
+    g2_client = G2Client(config, g2_engine, g2_configuration_manager, g2_config)
+
+    # Get results from Senzing G2.
+
+    return g2_client.get_datasources_list()
+
+
+def handle_post_configurator(iterator):
     ''' Add records to Senzing G2.  Pull resolved entities from G2. '''
 
     # Create G2 configuration objects.
@@ -1085,7 +1114,6 @@ def handle_post_resolver(iterator):
     # Get results from Senzing G2.
 
     result = g2_client.get_resolved_entities()
-    logging.info(message_info(103, line_count, len(result)))
 
     # Purge G2 database.
 
@@ -1097,14 +1125,13 @@ def handle_post_resolver(iterator):
 # Flask @app.routes
 # -----------------------------------------------------------------------------
 
-
-@app.route("/resolve", methods=['POST'])
-def http_post_resolve():
+@app.route("/datasources", methods=['GET'])
+def http_get_datasources():
 
     # Interact with Senzing.
 
     payload = flask_request.get_data(as_text=True)
-    response = handle_post_resolver(payload.splitlines())
+    response = handle_get_datasources(payload.splitlines())
 
     # Craft the HTTP response.
 
@@ -1112,6 +1139,22 @@ def http_post_resolve():
     response_status = status.HTTP_200_OK
     mimetype = 'application/json'
     return Response(response=response_pretty, status=response_status, mimetype=mimetype)
+
+@app.route("/datasources", methods=['POST'])
+def http_post_datasources():
+
+    # Interact with Senzing.
+
+    payload = flask_request.get_data(as_text=True)
+    response = handle_post_datasources(payload.splitlines())
+
+    # Craft the HTTP response.
+
+    response_pretty = json.dumps(response, sort_keys=True)
+    response_status = status.HTTP_200_OK
+    mimetype = 'application/json'
+    return Response(response=response_pretty, status=response_status, mimetype=mimetype)
+
 
 # -----------------------------------------------------------------------------
 # do_* functions
@@ -1146,7 +1189,7 @@ def do_file_input(args):
     # Create iterator over JSON Lines and ingest data.
 
     with open(config.get('input_file')) as input_iterator:
-        result = handle_post_resolver(input_iterator)
+        result = handle_post_configurator(input_iterator)
 
     # Create output.
 
