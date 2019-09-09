@@ -41,7 +41,9 @@ To see the options for a subcommand, run commands like:
     1. [Background knowledge](#background-knowledge)
 1. [Demonstrate using Command Line](#demonstrate-using-command-line)
     1. [Install](#install)
+    1. [Set environment variables](#set-environment-variables)
     1. [Run command](#run-command)
+    1. [Test Command Line](#test-command-line)
 1. [Demonstrate using Docker](#demonstrate-using-docker)
     1. [Initialize Senzing](#initialize-senzing)
     1. [Configuration](#configuration)
@@ -49,6 +51,7 @@ To see the options for a subcommand, run commands like:
     1. [Docker network](#docker-network)
     1. [Docker user](#docker-user)
     1. [Run docker container](#run-docker-container)
+    1. [Test docker container](#test-docker-container)
 1. [Demonstrate using Helm](#demonstrate-using-helm)
     1. [Prerequisite software for Helm demonstration](#prerequisite-software-for-helm-demonstration)
     1. [Clone repository for Helm demonstration](#clone-repository-for-helm-demonstration)
@@ -286,8 +289,7 @@ Use if a different userid is required.
       senzing/configurator
     ```
 
-### Test docker
-
+### Test docker container
 
 1. Get existing datasources.
    Example:
