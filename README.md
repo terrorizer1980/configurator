@@ -96,11 +96,9 @@ This repository assumes a working knowledge of:
 
 ### Set environment variables
 
-The output of `yum install senzingapi` placed files in different directories.
-
 1. :pencil2: Identify where
    [senzing/yum](https://github.com/Senzing/docker-yum)
-   placed the `SENZING_G2_DIR` directory.
+   placed the Senzing directories.
    Example:
 
     ```console
@@ -108,7 +106,12 @@ The output of `yum install senzingapi` placed files in different directories.
     export SENZING_ETC_DIR=/etc/opt/senzing
     export SENZING_G2_DIR=/opt/senzing/g2
     export SENZING_VAR_DIR=/var/opt/senzing
+    ```
 
+1. :pencil2: Identify database.
+   Example:
+
+    ```console
     export SENZING_DATABASE_URL="sqlite3://na:na@${SENZING_VAR_DIR}/sqlite/G2C.db"
     ```
 
@@ -286,7 +289,8 @@ Use if a different userid is required.
 ### Test docker
 
 
-1. XXX
+1. Get existing datasources.
+   Example:
 
     ```console
     curl -X GET \
@@ -305,7 +309,6 @@ Use if a different userid is required.
       --header 'Content-type: application/json;charset=utf-8' \
       http://localhost:5001/datasources
     ```
-
 
 ## Demonstrate using Helm
 
