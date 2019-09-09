@@ -9,17 +9,14 @@ To see all of the subcommands, run:
 
 ```console
 $ ./configurator.py
-usage: configurator.py [-h]
-                       {file-input,service,sleep,version,docker-acceptance-test}
-                       ...
+usage: configurator.py [-h] {service,sleep,version,docker-acceptance-test} ...
 
 Perform Senzing configuration. For more information, see
 https://github.com/Senzing/configurator
 
 positional arguments:
-  {file-input,service,sleep,version,docker-acceptance-test}
+  {service,sleep,version,docker-acceptance-test}
                         Subcommands (SENZING_SUBCOMMAND):
-    file-input          File based input / output.
     service             Receive HTTP requests.
     sleep               Do nothing but sleep. For Docker testing.
     version             Print version of configurator.py.
@@ -28,7 +25,6 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-
 ```
 
 To see the options for a subcommand, run commands like:
@@ -108,13 +104,20 @@ The output of `yum install senzingapi` placed files in different directories.
    Example:
 
     ```console
+    export SENZING_DATA_VERSION_DIR=/opt/senzing/data/1.0.0
+    export SENZING_ETC_DIR=/etc/opt/senzing
     export SENZING_G2_DIR=/opt/senzing/g2
+    export SENZING_VAR_DIR=/var/opt/senzing
+
+    export SENZING_DATABASE_URL="sqlite3://na:na@${SENZING_VAR_DIR}/sqlite/G2C.db"
     ```
 
 1. Set environment variables.
    Example:
 
     ```console
+    export SENZING_CONFIG_PATH=${SENZING_ETC_DIR}
+    export SENZING_SUPPORT_PATH=${SENZING_DATA_VERSION_DIR}
     export PYTHONPATH=${SENZING_G2_DIR}/python
     export LD_LIBRARY_PATH=${SENZING_G2_DIR}/lib:${SENZING_G2_DIR}/lib/debian
     ```
@@ -173,7 +176,7 @@ Configuration values specified by environment variable or command line parameter
 - **[SENZING_LOG_LEVEL](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_log_level)**
 - **[SENZING_NETWORK](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_network)**
 - **[SENZING_RUNAS_USER](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_runas_user)**
-- **[SENZING_SLEEP_TIME](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_sleep_time)**
+- **[SENZING_SLEEP_TIME_IN_SECONDS](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_sleep_time_in_seconds)**
 - **[SENZING_SUBCOMMAND](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_subcommand)**
 - **[SENZING_VAR_DIR](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_var_dir)**
 
@@ -186,9 +189,10 @@ Configuration values specified by environment variable or command line parameter
 ### Volumes
 
 The output of `yum install senzingapi` placed files in different directories.
-Create a folder for each output directory.
+The directories need to be identified.
+Here are some examples of how to identify the directories.
 
-1. :pencil2: Option #1.
+1. :pencil2: Example #1.
    To mimic an actual RPM installation,
    identify directories for RPM output in this manner:
 
@@ -199,7 +203,7 @@ Create a folder for each output directory.
     export SENZING_VAR_DIR=/var/opt/senzing
     ```
 
-1. :pencil2: Option #2.
+1. :pencil2: Example #2.
    If Senzing directories were put in alternative directories,
    set environment variables to reflect where the directories were placed.
    Example:
