@@ -1,11 +1,11 @@
 ARG BASE_IMAGE=senzing/senzing-base:1.2.1
 FROM ${BASE_IMAGE}
 
-ENV REFRESHED_AT=2019-09-04
+ENV REFRESHED_AT=2019-09-09
 
-LABEL Name="senzing/resolver" \
+LABEL Name="senzing/configurator" \
       Maintainer="support@senzing.com" \
-      Version="1.2.0"
+      Version="1.0.0"
 
 HEALTHCHECK CMD ["/app/healthcheck.sh"]
 
@@ -26,12 +26,7 @@ EXPOSE 5000
 # Copy files from repository.
 
 COPY ./rootfs /
-COPY ./resolver.py /app
-
-# Make directory that resolver.py can use.
-
-RUN mkdir /var/opt/senzing-internal \
- && chown 1001 /var/opt/senzing-internal
+COPY ./configurator.py /app
 
 # Make non-root container.
 
@@ -39,8 +34,6 @@ USER 1001
 
 # Runtime execution.
 
-ENV SENZING_INTERNAL_DATABASE=/var/opt/senzing-internal/G2C.db
-
 WORKDIR /app
-ENTRYPOINT ["/app/resolver.py"]
+ENTRYPOINT ["/app/configurator.py"]
 CMD ["service"]
