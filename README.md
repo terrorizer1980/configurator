@@ -448,14 +448,14 @@ The Git repository has files that will be used in the `helm install --values` pa
    Example:
 
     ```console
-    kubectl create -f ${KUBERNETES_DIR}/persistent-volume-opt-senzing.yaml
+    kubectl create -f ${KUBERNETES_DIR}/persistent-volume-senzing.yaml
     ```
 
 1. Create persistent volume claims.
    Example:
 
     ```console
-    kubectl create -f ${KUBERNETES_DIR}/persistent-volume-claim-opt-senzing.yaml
+    kubectl create -f ${KUBERNETES_DIR}/persistent-volume-claim-senzing.yaml
     ```
 
 1. Optional: Review persistent volumes and claims.
@@ -491,36 +491,8 @@ The Git repository has files that will be used in the `helm install --values` pa
 
 1. Reference: [helm repo](https://helm.sh/docs/helm/#helm-repo)
 
-### Deploy Senzing_API.tgz package
+### Deploy Senzing
 
-This deployment initializes the Persistent Volume with Senzing code and data.
-
-1. Install chart.
-   Example:
-
-    ```console
-    helm install \
-      --name ${DEMO_PREFIX}-senzing-package \
-      --namespace ${DEMO_NAMESPACE} \
-      --values ${HELM_VALUES_DIR}/senzing-package.yaml \
-      senzing/senzing-package
-    ```
-
-1. Wait until Job has completed.
-   Example:
-
-    ```console
-    kubectl get pods \
-      --namespace ${DEMO_NAMESPACE} \
-      --watch
-    ```
-
-1. Example of completion:
-
-    ```console
-    NAME                       READY   STATUS      RESTARTS   AGE
-    my-senzing-package-8n2ql   0/1     Completed   0          2m44s
-    ```
 
 ### Deploy configurator
 
@@ -531,10 +503,10 @@ This deployment launches the configurator.
 
     ```console
     helm install \
-      --name ${DEMO_PREFIX}-configurator \
+      --name ${DEMO_PREFIX}-senzing-configurator \
       --namespace ${DEMO_NAMESPACE} \
       --values ${HELM_VALUES_DIR}/configurator.yaml \
-      senzing/configurator
+      senzing/senzing-configurator
     ```
 
 1. Wait for pods to run.  Example:
