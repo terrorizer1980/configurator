@@ -54,7 +54,6 @@ To see the options for a subcommand, run commands like:
     1. [Configuration](#configuration)
     1. [Volumes](#volumes)
     1. [Docker network](#docker-network)
-    1. [External database](#external-database)
     1. [Docker user](#docker-user)
     1. [MSSQL support](#mssql-support)
     1. [Run docker container](#run-docker-container)
@@ -264,36 +263,6 @@ The following examples show how to identify each output directory.
     export SENZING_NETWORK_PARAMETER="--net ${SENZING_NETWORK}"
     ```
 
-### External database
-
-:thinking: **Optional:**  Use if storing data in an external database.
-
-1. :pencil2: Specify database.
-   Example:
-
-    ```console
-    export DATABASE_PROTOCOL=postgresql
-    export DATABASE_USERNAME=postgres
-    export DATABASE_PASSWORD=postgres
-    export DATABASE_HOST=senzing-postgresql
-    export DATABASE_PORT=5432
-    export DATABASE_DATABASE=G2
-    ```
-
-1. Construct Database URL.
-   Example:
-
-    ```console
-    export SENZING_DATABASE_URL="${DATABASE_PROTOCOL}://${DATABASE_USERNAME}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_DATABASE}"
-    ```
-
-1. Construct parameter for `docker run`.
-   Example:
-
-    ```console
-    export SENZING_DATABASE_URL_PARAMETER="--env SENZING_DATABASE_URL=${SENZING_DATABASE_URL}
-    ```
-
 ### Docker user
 
 :thinking: **Optional:**  The docker container runs as "USER 1001".
@@ -317,10 +286,9 @@ Use if a different userid (UID) is required.
 ### MSSQL support
 
 :thinking: **Optional:**  This is only needed if using a Microsoft MSSQL database.
-Use if a different userid is required.
+If using a different database, these steps may be skipped.
 
-1. :pencil2: Identify user.
-   User "0" is root.
+1. :pencil2: Identify directory with MSSQL drivers.
    Example:
 
     ```console
@@ -350,7 +318,6 @@ Use if a different userid is required.
       --volume ${SENZING_G2_DIR}:/opt/senzing/g2 \
       --volume ${SENZING_VAR_DIR}:/var/opt/senzing \
       ${SENZING_RUNAS_USER_PARAMETER} \
-      ${SENZING_DATABASE_URL_PARAMETER} \
       ${SENZING_NETWORK_PARAMETER} \
       ${SENZING_OPT_MICROSOFT_DIR_PARAMETER} \
       senzing/configurator
