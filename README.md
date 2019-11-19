@@ -78,6 +78,14 @@ To see the options for a subcommand, run commands like:
 1. [Errors](#errors)
 1. [References](#references)
 
+### Legend
+
+1. :thinking: - A "thinker" icon means that a little extra thinking may be required.
+   Perhaps you'll need to make some choices.
+   Perhaps it's an optional step.
+1. :pencil2: - A "pencil" icon means that the instructions may need modification before performing.
+1. :warning: - A "warning" icon means that something tricky is happening, so pay attention.
+
 ## Expectations
 
 ### Space
@@ -230,7 +238,7 @@ The following examples show how to identify each output directory.
    Example:
 
     ```console
-    sudo chmod -R 777 ${SENZING_VAR_DIR}
+    sudo chown $(id -u):$(id -g) -R ${SENZING_VAR_DIR}
     ```
 
 ### Docker network
@@ -264,12 +272,19 @@ The following examples show how to identify each output directory.
 :thinking: **Optional:**  The docker container runs as "USER 1001".
 Use if a different userid (UID) is required.
 
-1. :pencil2: Identify user.
+1. :pencil2: Manually identify user.
    User "0" is root.
    Example:
 
     ```console
     export SENZING_RUNAS_USER="0"
+    ```
+
+   Another option, use current user.
+   Example:
+
+    ```console
+    export SENZING_RUNAS_USER=$(id -u)
     ```
 
 1. Construct parameter for `docker run`.
