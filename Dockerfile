@@ -19,9 +19,9 @@ RUN pip3 install \
     Flask==1.0.2 \
     flask_api
 
-# The port for the Flask is 5000.
+# The port for the Flask is 8253.
 
-EXPOSE 5000
+EXPOSE 8253
 
 # Copy files from repository.
 
