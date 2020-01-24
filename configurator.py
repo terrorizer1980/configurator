@@ -37,7 +37,7 @@ app = Flask(__name__)
 __all__ = []
 __version__ = "1.0.0"  # See https://www.python.org/dev/peps/pep-0396/
 __date__ = '2019-09-06'
-__updated__ = '2019-09-23'
+__updated__ = '2020-01-24'
 
 SENZING_PRODUCT_ID = "5009"  # See https://github.com/Senzing/knowledge-base/blob/master/lists/senzing-product-ids.md
 log_format = '%(asctime)s %(message)s'
@@ -85,7 +85,7 @@ configuration_locator = {
         "cli": "host"
     },
     "port": {
-        "default": 5000,
+        "default": 8253,
         "env": "SENZING_PORT",
         "cli": "port"
     },

@@ -160,7 +160,7 @@ This repository assumes a working knowledge of:
     ```console
     curl -X GET \
       --header 'Content-type: application/json;charset=utf-8' \
-      http://localhost:5000/datasources
+      http://localhost:8253/datasources
     ```
 
 1. Add new datasources.
@@ -172,7 +172,7 @@ This repository assumes a working knowledge of:
     curl -X POST \
       --data '[ "SEARCH", "TEST", "TEST1", "TEST2"]' \
       --header 'Content-type: application/json;charset=utf-8' \
-      http://localhost:5000/datasources
+      http://localhost:8253/datasources
     ```
 
 ## Demonstrate using Docker
@@ -314,7 +314,7 @@ For other databases, these steps may be skipped.
     ```console
     sudo docker run \
       --interactive \
-      --publish 5001:5000 \
+      --publish 8253:8253 \
       --rm \
       --tty \
       --volume ${SENZING_DATA_VERSION_DIR}:/opt/senzing/data \
@@ -336,7 +336,7 @@ For other databases, these steps may be skipped.
     ```console
     curl -X GET \
       --header 'Content-type: application/json;charset=utf-8' \
-      http://localhost:5001/datasources
+      http://localhost:8253/datasources
     ```
 
 1. Add new datasources.
@@ -348,7 +348,7 @@ For other databases, these steps may be skipped.
     curl -X POST \
       --data '[ "SEARCH", "TEST", "TEST1", "TEST2"]' \
       --header 'Content-type: application/json;charset=utf-8' \
-      http://localhost:5001/datasources
+      http://localhost:8253/datasources
     ```
 
 ## Demonstrate using Helm
@@ -570,7 +570,7 @@ This deployment launches the configurator.
     kubectl port-forward \
       --address 0.0.0.0 \
       --namespace ${DEMO_NAMESPACE} \
-      svc/${DEMO_PREFIX}-configurator 5001:5000
+      svc/${DEMO_PREFIX}-configurator 8253:8253
     ```
 
 1. Test HTTP API.
@@ -581,7 +581,7 @@ This deployment launches the configurator.
     curl -X POST \
       --header "Content-Type: text/plain" \
       --data-binary @${GIT_REPOSITORY_DIR}/test/test-data-1.json \
-      http://localhost:5001/resolve
+      http://localhost:8253/resolve
     ```
 
 ### Install senzing-debug Helm chart
