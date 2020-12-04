@@ -1,4 +1,4 @@
-# template-docker
+# configurator
 
 Placeholder for [GitHub pages](https://pages.github.com/).
 
