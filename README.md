@@ -118,7 +118,7 @@ This repository assumes a working knowledge of:
    Example:
 
     ```console
-    export SENZING_DATA_VERSION_DIR=/opt/senzing/data/1.0.0
+    export SENZING_DATA_VERSION_DIR=/opt/senzing/data/2.0.0
     export SENZING_ETC_DIR=/etc/opt/senzing
     export SENZING_G2_DIR=/opt/senzing/g2
     export SENZING_VAR_DIR=/var/opt/senzing
@@ -219,7 +219,7 @@ Configuration values specified by environment variable or command line parameter
 
         ```console
         cat ${SENZING_VOLUME}/g2/g2BuildVersion.json
-        cat ${SENZING_VOLUME}/data/1.0.0/libpostal/data_version
+        cat ${SENZING_VOLUME}/data/2.0.0/libpostal/data_version
         ```
 
     1. :warning:
@@ -233,7 +233,7 @@ Configuration values specified by environment variable or command line parameter
    Example:
 
     ```console
-    export SENZING_DATA_VERSION_DIR=${SENZING_VOLUME}/data/1.0.0
+    export SENZING_DATA_VERSION_DIR=${SENZING_VOLUME}/data/2.0.0
     export SENZING_ETC_DIR=${SENZING_VOLUME}/etc
     export SENZING_G2_DIR=${SENZING_VOLUME}/g2
     export SENZING_VAR_DIR=${SENZING_VOLUME}/var
